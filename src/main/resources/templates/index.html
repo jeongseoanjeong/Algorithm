@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>코드 짜기...</title>
+</head>
+<style>
+    .magenta{
+        color:magenta;
+    }
+    .red{
+        color:red;
+    }
+    .blue{
+        color:blue;
+    }
+     .gold{
+        color:gold;
+    }
+     .cyan{
+        color:cyan;
+    }
+     .deepskyblue{
+        color:deepskyblue;
+    }
+</style>
+
+<body>
+<button onclick="location.href='/question';">도전 모드:</button>
+<form action="run" method="POST">
+    <label for="lang">사용 언어</label>
+    <select name="lang" id="lang">
+        <option value="java">Java</option>
+        <option value="python3">Python(ver:3)</option>
+        <option value="python2_7">Python(ver: 2.7)</option>
+        <option value="c">c</option>
+        <option value="cpp">c++</option>
+    </select><br/>
+    입력값:<input name="stdin" /> <input type="submit" value="Submit" /><br>
+    <textarea style="opacity:0.1;position :absolute;height:3000px; width:3000px; resize: none; display:inline;color: #00000000;caret-color: #ffffff;" name="command" contenteditable="true"  id="cmd2"></textarea>
+    <pre style="z-index:-1; white-space: pre;white-space: pre-line; height:3000px; width:3000px;position :relative;" id="cmd"  ></pre><br>
+    <input type="hidden" name="userid"th:value="${userid}"/>
+
+    <br/>
+
+
+</form>
+
+<script>
+function strEncode(val) {
+    return encodeURIComponent(val);
+}
+
+let pos = 0;
+function getCaret(e){
+  let range;
+  let textNode;
+  let offset;
+  var start;
+  //let replacement;
+  if (document.caretPositionFromPoint) {
+    range = document.caretPositionFromPoint(e.clientX, e.clientY);
+    textNode = range.offsetNode;
+    offset = range.offset;
+    //replacement = textNode.splitText(offset);
+  } else if (document.caretRangeFromPoint) {
+    // Use WebKit-proprietary fallback method
+    range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    textNode = range.startContainer;
+    offset = range.startOffset;
+    //replacement = textNode.splitText(offset);
+  } else {
+    // Neither method is supported, do nothing
+    return;
+  }
+  var el=document.getElementById('cmd2');
+  start=el.selectionStart
+    if(pos!=start){
+
+      pos=start
+      console.log(start);
+      }
+ }
+ function setCaret(){
+ const el= document.getElementById('cmd2');
+    el.selectionStart=el.selectionEnd=pos
+ }
+ var indent=0;
+function update() {
+
+    let temp="    ";
+    let temp2="";
+    for(let i=0;i<=indent;i++){
+        temp2+=temp;
+    }
+    indent+=1
+    document.getElementById("cmd").innerText = document.getElementById("cmd2").value.replaceAll(/\{[\r\n]$/gi, "{\r\n"+temp2+"\r\n}").replaceAll(/\[$/gi, "[]").replaceAll(/\($/gi, "()").replaceAll(/:$/gi, ":\r\n"+temp2).replaceAll(/<$/gi, "<>").replaceAll(/ /gi,temp2+" ");
+  document.getElementById("cmd2").value=document.getElementById("cmd").innerText;
+  console.log("logged:"+document.getElementById("cmd2").value);
+}
+var cmd = document.getElementById("cmd2");
+cmd.addEventListener("keyup", async function(event) {
+    console.log(document.getElementById("cmd").innerHTML);
+     getCaret(event);
+   update()
+
+    if (event.key === "Enter") {
+        var lang = document.getElementById("lang");
+        try {
+            const response = await fetch("/format?lang=" + lang.value + "&code=" + strEncode(cmd.value.replaceAll(/(?=[\r\n])/gi, ":;")));
+            const text = await response.text();
+            console.log(decodeURIComponent(text));
+            document.getElementById("cmd").innerHTML = decodeURIComponent(text).replaceAll(/\#/gi,"&#35;").replaceAll(/\t/gi, "\xa0\xa0\xa0\xa0").replaceAll(/\s/gi,"\xa0").replaceAll(/<(?=[/s])/gi, "&lt;").replaceAll('>', "&gt;");// + "\r\n";
+
+        } catch (error) {
+            console.error(error);
+        }
+    } else if(event.key === "{"||event.key === "("||event.key === "["){
+       if(event.key === "{"){
+       pos+=1;
+       }else{
+
+        }
+    }else if(event.key==="Backspace"&&indent>0){
+        indent-=0.25;
+    }else if(event.key=="Spacebar"||event.key==" "||event.key==32){
+
+    let rep= document.getElementById("cmd2").value.slice(0,pos)
+    let rep2= document.getElementById("cmd2").value.slice(pos)
+     console.log("rep2:"+rep2);
+    if(!rep2&&rep2==""){
+       document.getElementById("cmd2").value=rep+" ";
+        document.getElementById("cmd").value=rep+"\xa0<br>";
+    }else{
+        console.log(rep);
+         pos-=1;
+        document.getElementById("cmd2").value=rep+" "+rep2;
+        document.getElementById("cmd").value=rep+"\xa0"+rep2;
+    }
+
+ }
+     setCaret();
+
+
+})
+</script>
+</body>
+
+</html>
